@@ -1,8 +1,8 @@
 import cv2
 import mediapipe as mp
-import tkinter as tk
-from tkinter import filedialog
-from PIL import Image, ImageTk
+import streamlit as st
+from PIL import Image
+import numpy as np
 import time
 
 # Inicializar MediaPipe Hands
@@ -111,7 +111,7 @@ def calcular_movimientos_por_minuto(duracion_video):
 
 def mostrar_resultados_en_pantalla(promedio_ciclos, movimientos_por_minuto):
     resultado_texto = f"Promedio de ciclos: {promedio_ciclos:.2f} segundos\nMovimientos por minuto: {movimientos_por_minuto}"
-    resultado_label.config(text=resultado_texto)
+    st.write(resultado_texto)
 
 def preprocess_frame(frame):
     # Convertir a escala de grises
@@ -146,14 +146,14 @@ def procesar_video(ruta_video):
     cap = cv2.VideoCapture(ruta_video)
     duracion_video = cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS)
     
-    def actualizar_frame():
+    while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             cap.release()
             promedio_ciclos = calcular_promedio_ciclos()  # Calcular el promedio de ciclos al final del video
             movimientos_por_minuto = calcular_movimientos_por_minuto(duracion_video)  # Calcular movimientos por minuto al final del video
             mostrar_resultados_en_pantalla(promedio_ciclos, movimientos_por_minuto)
-            return
+            break
 
         # Redimensionar el frame para que se ajuste a la pantalla vertical
         frame = cv2.resize(frame, (480, 640))
@@ -184,33 +184,16 @@ def procesar_video(ruta_video):
             if len(manos) == 2:
                 estado = detectar_posicion(manos[0], manos[1])
 
-        # Convertir frame a imagen Tkinter
-        img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        imgtk = ImageTk.PhotoImage(image=img)
-        panel.imgtk = imgtk
-        panel.configure(image=imgtk)
-        panel.after(10, actualizar_frame)
+        # Mostrar el frame procesado en Streamlit
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        st.image(frame_bgr, channels="BGR")
 
-    # Iniciar el loop de video
-    actualizar_frame()
+# Interfaz de usuario con Streamlit
+st.title("Reconocedor de Posiciones de Manos")
 
-def cargar_video():
-    ruta_video = filedialog.askopenfilename(title="Seleccionar video", filetypes=[("Video files", ".mp4;.avi")])
-    if ruta_video:
-        procesar_video(ruta_video)
-
-# GUI con Tkinter
-root = tk.Tk()
-root.title("Reconocedor de Posiciones de Manos")
-
-# Botones y panel
-btn_cargar = tk.Button(root, text="Cargar Video", command=cargar_video)
-btn_cargar.pack()
-
-panel = tk.Label(root)
-panel.pack()
-
-resultado_label = tk.Label(root, text="", font=("Helvetica", 16))
-resultado_label.pack()
-
-root.mainloop()
+ruta_video = st.file_uploader("Seleccionar video", type=["mp4", "avi"])
+if ruta_video is not None:
+    # Guardar el archivo subido en el sistema de archivos
+    with open("temp_video.mp4", "wb") as f:
+        f.write(ruta_video.getbuffer())
+    procesar_video("temp_video.mp4")
