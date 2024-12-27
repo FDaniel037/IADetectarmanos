@@ -146,6 +146,8 @@ def procesar_video(ruta_video):
     cap = cv2.VideoCapture(ruta_video)
     duracion_video = cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS)
     
+    frame_placeholder = st.empty()
+    
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -186,7 +188,7 @@ def procesar_video(ruta_video):
 
         # Mostrar el frame procesado en Streamlit
         frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        st.image(frame_bgr, channels="BGR")
+        frame_placeholder.image(frame_bgr, channels="BGR")
 
 # Interfaz de usuario con Streamlit
 st.title("Reconocedor de Posiciones de Manos")
