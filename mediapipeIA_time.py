@@ -190,6 +190,9 @@ def procesar_video(ruta_video):
         frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         frame_placeholder.image(frame_bgr, channels="BGR")
 
+        # Añadir un pequeño retraso para simular la velocidad de fotogramas del video
+        time.sleep(0.03)
+
 # Interfaz de usuario con Streamlit
 st.title("Reconocedor de Posiciones de Manos")
 
